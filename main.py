@@ -4,18 +4,16 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 DATADIR = '/home/andy/Downloads/'
+FIGDIR = 'figures/'
 
 
 
-#Importing data from fits
-data = fits.getdata(DATADIR+'Stokes_sunspot_HINODE.fits')
-I = data[0,:,:,:]
-Q = data[1,:,:,:]
-U = data[2,:,:,:]
-V = data[3,:,:,:]
 
 
 #Espectra calibration
+    #Importing data from fits
+data = fits.getdata(DATADIR+'Stokes_sunspot_HINODE.fits')
+    
     #Creating raw intensity image at t=1
 if (os.path.exists('new.fits')):
     os.remove('new.fits')
@@ -26,18 +24,32 @@ plt.figure()
 plt.imshow(I_img, cmap='viridis')
 plt.colorbar()
 plt.tight_layout()
+plt.savefig(FIGDIR+'Full_Image.png', dpi=150)
 plt.show()
+    
     #Plotting spectra for calm region
-I = data[0,350,50,:]        #Calm region at (350,50)
-x_axis = range(len(I))
-mean = np.mean(I)
+I = data[0,:,:,:]        #Calm region at (350,50)
+I_calm = I[25:75,325:375,:]
+I_dark = I[175:200,225:250,:]
+mean_calm = np.mean(I_calm, axis=(0,1))
+mean_dark = np.mean(I_dark, axis=(0,1))
 plt.figure()
-plt.plot(x_axis,I)
-plt.hlines(mean, x_axis[0], x_axis[len(x_axis)-1],'r',ls='--')
+plt.plot(range(96),mean_calm)
+plt.plot(range(96),mean_dark)
 plt.tight_layout()
+plt.savefig(FIGDIR+'Calm_vs_Dark_t50.png', dpi=150)
 plt.show()
 
-# EN VEZ DE TOMAR UN PUNTO PARA CALCULAR EL VALOR MEDIO SELECCIONAR UNA REGIÓN DE 10-15 PÍXELES DE ANCHO
-# Y HACER EL VALOR MEDIO DE LA INTENSIDAD EN ESA REGIÓN PARA CADA LONGITUD DE ONDA, ASÍ NOS QUEDA UN ESPECTRO
-# MEDIADO EN INTENSTIDAD POR UNIDAD DE LONGITUD DE ONDA.
+    #Atlas image calibrating
+atlas = fits.getdata('data/atlas_6301_6302.fits')
+# x_min1 = np.min(atlas[740:780,0])
+y_min1 = np.min(atlas[740:780,1])
+# x_min2 = np.min(atlas[1225:1275,0])
+y_min2 = np.min(atlas[1225:1275,1])
+# print(x_min1,y_min1)
+plt.figure()
+plt.hlines(y_min1,xmin = np.min(atlas[:,0]),xmax = np.max(atlas[:,0]),color='red',ls='--')
+plt.hlines(y_min2,xmin = np.min(atlas[:,0]),xmax = np.max(atlas[:,0]),color='orange',ls='--')
+plt.plot(atlas[:,0],atlas[:,1])
+plt.show()
 
