@@ -71,7 +71,8 @@ def Img_calibration(DATADIR):
     ymin1_fit = min1_fit[0]*(xmin1_fit)**2 + min1_fit[1]*(xmin1_fit) + min1_fit[2]
     xmin2_fit = np.linspace(atlas[min2_pos-dlambda,0],atlas[min2_pos+dlambda,0],60)
     ymin2_fit = min2_fit[0]*(xmin2_fit)**2 + min2_fit[1]*(xmin2_fit) + min2_fit[2]
-    plt.figure()
+    plt.figure(x_min1_surr[min1fit_pos], ymin=0, ymax = 10000)
+    plt.vlines(x_min2_surr[min2fit_pos], ymin=0, ymax = 10000)
     plt.scatter(atlas[min1_pos,0],atlas[min1_pos,1],c='r',s=10)
     plt.scatter(atlas[min2_pos,0],atlas[min2_pos,1],c='r',s=10)
     plt.plot(atlas[:,0],atlas[:,1])
