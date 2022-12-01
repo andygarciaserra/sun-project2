@@ -1,7 +1,7 @@
 from func import *
 FIGDIR = 'figures/'
 DATADIR = '/home/andy/Downloads/prac2solar/data/'
-
+RADTODEG = 180/np.pi
 
 
 # Las regiones en uso:
@@ -75,17 +75,36 @@ plt.legend(loc='best')
 plt.show()
 
         #importando 2D de Q,U,V
-Q = data[1,:,:,50]
-U = data[2,:,:,50]
-V = data[3,:,:,50]
-phi = 0.5*np.arctan2(U,Q)
+Q = data[1,:,:,67]
+U = data[2,:,:,67]
+V = data[3,:,:,67]
 
+        #calculando phi y ploteando
+phi = 0.5*RADTODEG*np.arctan2(U,Q)
+phi[np.isnan(phi)] = 0
 hdu = fits.PrimaryHDU(phi)
 hdu.writeto('phi.fits')
 phi = fits.getdata('phi.fits',ext=0)
 os.remove('phi.fits')
 plt.figure()
-plt.imshow(phi,cmap='viridis')
+plt.imshow(phi,cmap='bwr')
 plt.colorbar()
 plt.show()
+
+        #calculando gamma y ploteando
+C = 1/(np.sqrt((Q)**2+(U)**2)/V)
+gamma = RADTODEG*np.arccos(np.divide(-1+np.sqrt(4*(C**2)+1),2*C))
+gamma[np.isnan(gamma)] = 0
+hdu = fits.PrimaryHDU(gamma)
+hdu.writeto('gamma.fits')
+gamma = fits.getdata('gamma.fits',ext=0)
+os.remove('gamma.fits')
+plt.figure()
+plt.imshow(gamma,cmap='bwr')
+plt.colorbar()
+plt.show()
+
+
+
+
 
