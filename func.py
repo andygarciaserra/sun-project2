@@ -35,7 +35,11 @@ def Duple_array(I,lamda,B):
 def Plot_fits(img,color):
     plt.figure()
     plt.imshow(img,cmap=color)
-    plt.colorbar()
+    plt.xlabel('coordenada X [pix]')
+    plt.ylabel('coordenada Y [pix]')
+    plt.colorbar(label='T [K]')
+    plt.tight_layout()
+    plt.savefig(FIGDIR+'2D_T.png', dpi=150)
     plt.show()
 
 #Plot simple de los espectros
@@ -62,11 +66,14 @@ def print_img(figdir):
     hdu.writeto('new.fits')
     I_img = fits.getdata('new.fits',ext=0)
     os.remove('new.fits')
+
     plt.figure()
-    plt.imshow(I_img, cmap='viridis')
-    plt.colorbar()
+    plt.imshow(I_img, cmap='inferno')
+    plt.xlabel('coordenada X [pix]')
+    plt.ylabel('coordenada Y [pix]')
+    plt.colorbar(label='I [cuentas]')
     plt.tight_layout()
-    plt.savefig(figdir+'Full_Image.png', dpi=150)
+    plt.savefig(FIGDIR+'2D_spot.png', dpi=150)
     plt.show()
 
 #Calculando espectros medios de las intensidades
@@ -80,7 +87,7 @@ def Mean_Spectra_regions(FIGDIR,I_calm,I_dark,plot):
         plt.tight_layout()
         plt.savefig(FIGDIR+'Calm_vs_Dark_t50.png', dpi=150)
         plt.show()
-    return(mean_calm,mean_dark)
+    return(mean_calm, mean_dark)
 
 #Encontrando dos mínimos dada longitud de onda y rango
 def Double_Minimum_Finder(spectra,delta,surr_min1,surr_min2):
@@ -97,7 +104,30 @@ def Minimum_Finder(spectra,delta,surr):
     min_cont = np.linspace(spectra[min_pos-delta,0],spectra[min_pos+delta,0],1000)
     minfit_pos = Find_minmax(min_fit,min_cont)
     minfit_y = Parabola(min_fit,min_cont[minfit_pos])
-    return [min_cont[minfit_pos],minfit_y]
+    return [min_cont[minfit_pos], minfit_y]
+
+#[CON PLOT PARA INFORME] Encontrando mínimo dada longitud de onda y rango
+def Minimum_Finder2(spectra,delta,surr):
+    min_pos = np.argmin(spectra[surr[0]:surr[1],1]) + surr[0]
+    I_min_surr = spectra[min_pos-delta:min_pos+delta,1]
+    x_min_surr = spectra[min_pos-delta:min_pos+delta,0]
+    min_fit = np.polyfit(x_min_surr,I_min_surr,2)
+    min_cont = np.linspace(spectra[min_pos-delta,0],spectra[min_pos+delta,0],1000)
+    minfit_pos = Find_minmax(min_fit,min_cont)
+    minfit_y = Parabola(min_fit, min_cont[minfit_pos])
+
+    plt.figure()
+    plt.plot(x_min_surr,I_min_surr,color='black',ls='--',alpha=0.5,label=r'I ($\lambda$)')
+    plt.plot(min_cont,Parabola(min_fit,min_cont),color='red',label='Ajuste')
+    plt.scatter(min_cont[minfit_pos],minfit_y,color='red',s=30,zorder=2)
+    plt.legend()
+    plt.gca().get_xaxis().get_major_formatter().set_useOffset(False)
+    plt.xlabel('longitud de onda [unidades arbitrarias]')
+    plt.ylabel('I [cuentas]')
+    plt.savefig(FIGDIR+'I_min1_fit.png',dpi=150)
+    plt.show()
+
+    return [min_cont[minfit_pos], minfit_y]
 
 #Encontrando máximo dada longitud de onda y rango
 def Maximum_Finder(spectra,delta,surr):
@@ -127,7 +157,7 @@ def Img_calibration(DATADIR, plot):
 
     #Calibración final
     curve = Calibration_Curve([xcoords_hinode[0], xcoords_hinode[1]],
-                              [xcoords_atlas[0], xcoords_atlas[1]])
+                               [xcoords_atlas[0], xcoords_atlas[1]])
     atlas[:,1] = vfactor*atlas[:,1]
     hinode[:,0] = hinode[:,0]*curve[0]+curve[1]
 
@@ -136,9 +166,11 @@ def Img_calibration(DATADIR, plot):
         plt.figure()
         plt.plot(atlas[:,0],atlas[:,1],label='Atlas data')
         plt.plot(hinode[:,0],hinode[:,1],label='HINODE calibration')
+        plt.xlabel('longitud de onda ['+r'$\AA$'+']')
+        plt.ylabel('I [cuentas]')
         plt.legend()
         plt.tight_layout()
-        plt.savefig(FIGDIR+'Calibration.png', dpi=150)
+        plt.savefig(FIGDIR+'calibrated.png', dpi=150)
         plt.show()
     return hinode[:,0]
 
@@ -158,6 +190,21 @@ def Find_minmax(fit, xcoord):
 def Calibration_Curve(p1,p2):
     return np.polyfit(p1,p2,1)
 
+#[CON PLOT PARA INFORME] Curva (recta) de calibración dados los dos puntos
+def Calibration_Curve2(p1,p2):
+    plt.figure()
+    plt.plot(p1,p2,color='black',ls='--',alpha=0.5)
+    plt.scatter(p1[0],p2[0],color='red',s=15,label='{0:.2f}'.format(p1[0])+', '+'{0:.2f}'.format(p2[0]))
+    plt.scatter(p1[1],p2[1],color='red',s=15,label='{0:.2f}'.format(p1[1])+', '+'{0:.2f}'.format(p2[1]))
+    plt.legend()
+    plt.xlabel('longitud de onda [unidad arbitraria]')
+    plt.ylabel('longitud de onda ['+r'$\AA$'+']')
+    plt.savefig(FIGDIR+'calib_line.png')
+    plt.show()
+    fit = np.polyfit(p1,p2,1)
+    print(fit)
+    return fit
+
 #Calculando y ploteando anchuras Zeeman y Doppler en I+V
 def Widenings(I,IplusV,IminV,plot):
     min1 = Minimum_Finder(I,4,[20,30])
@@ -172,26 +219,29 @@ def Widenings(I,IplusV,IminV,plot):
     xizq = Parabola(fit,hmin)
     lam_D = min_plus[0]-xizq
     lam_B = np.absolute(min_min[0]-min_plus[0])/2
-
     B = lam_B/(C*2.5*(min1[0]**2))
 
     if(plot=='yes'):
         plt.figure(figsize=(8,6))
-        plt.plot(IplusV[:,0],IplusV[:,1])
-        plt.plot(IminV[:,0],IminV[:,1])
+        plt.plot(IplusV[:,0],IplusV[:,1], label='I + V')
+        plt.plot(IminV[:,0],IminV[:,1], label='I - V')
         plt.scatter(xizq,hmin,color='red',s=30,marker='o',zorder=3)
         plt.scatter(min_plus[0],hmin,color='red',s=30,marker='o',zorder=3)
+        plt.hlines(IplusV_cont,xmin=IminV[0,0],xmax=IminV[-1,0],color='black',ls='--',alpha=0.5,
+                   lw=2,label= '{0:.2f}'.format(IplusV_cont))
         plt.hlines(hmin,xmin=xizq,xmax=min_plus[0],color='red', \
                   label=r'$\Delta \lambda_D$ = '+'{0:.2f}'.format(lam_D)+r' $\AA$')
         plt.scatter(min_min[0],min_min[1],color='black',s=30,marker='o',zorder=3)
         plt.scatter(min_plus[0],min_plus[1],color='black',s=30,marker='o',zorder=3)
+        plt.vlines(min_plus[0],ymin=min_plus[1],ymax=IplusV_cont,color='black',ls='--',alpha=0.5)
         plt.hlines(min_plus[1],xmin=min_plus[0],xmax=min_min[0],color='black', \
                   label=r'$\Delta \lambda_B$ = '+'{0:.2f}'.format(lam_B)+r' $\AA$')
-
+        plt.ylabel('I[cuentas]')
+        plt.xlabel('longitud de onda ['+r'$\AA$'+']')
         plt.title('B = '+'{0:.2f}'.format(B)+' G')
-        plt.legend(loc='best')
+        plt.legend(loc='lower center')
         plt.tight_layout()
-        plt.savefig(FIGDIR+'Widenings.png', dpi=150)
+        plt.savefig(FIGDIR+'widenings.png', dpi=150)
         plt.show()
 
     return lam_B, B, min1
@@ -207,7 +257,7 @@ def Gamma(Q,U,V,plot):
     os.remove('gamma.fits')
 
     if(plot=='yes'):
-        Plot_fits(gamma,'turbo')
+        Plot_fits(gamma,'plasma')
 
     return gamma
 
@@ -239,7 +289,7 @@ def T(I,Icont,lamda,plot):
     T = 1/(1/Tm-(((k*lamda*1e-10)/(h*c))*np.log(I/Icont)))
     
     if(plot=='yes'):
-        Plot_fits(T,'turbo')
+        Plot_fits(T,'plasma')
 
     return T
 

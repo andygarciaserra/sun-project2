@@ -6,10 +6,10 @@ FIGDIR = 'figures/'
 DATADIR = '/home/andy/Downloads/prac2solar/data/'
 
 
-
     #2# CALIBRACION:
 #print_img(DATADIR+'Stokes_sunspot_HINODE.fits')
-lamda = Img_calibration(DATADIR, 'yes')
+lamda = Img_calibration(DATADIR, 'no')
+
 
     #3# MEDIDA DEL CAMPO MAGNÉTICO:
         #3.1# Campo fuerte:
@@ -28,10 +28,10 @@ U = data[2,:,:,67]
 V = data[3,:,:,67]
 
         #calculando phi y ploteando
-phi = Phi(Q,U,V,'yes')
+#phi = Phi(Q,U,V,'yes')
 
         #calculando gamma y ploteando
-gamma = Gamma(Q,U,V,'yes')
+#gamma = Gamma(Q,U,V,'yes')
 
         #3.2#Campo débil:
         #calculando B_long
@@ -63,7 +63,9 @@ Plot_fits(delta,'turbo')
 v = v*1e-3
 plt.figure()
 plt.imshow(v,cmap='bwr',vmin=-2,vmax=1.5)
-plt.colorbar()
+plt.xlabel('coordenada X [pix]')
+plt.ylabel('coordenada Y [pix]')
+plt.colorbar(label='v [km/s]')
 plt.tight_layout()
-plt.savefig(FIGDIR+'Full_Image.png', dpi=150)
+plt.savefig(FIGDIR+'2D_v".png', dpi=150)
 plt.show()
